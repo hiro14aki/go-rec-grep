@@ -24,7 +24,8 @@ func execGrep(text string, target string) {
 
 	if len(result) > 0 {
 		for _, v := range result {
-			execGrep(v, target)
+			newText := strings.Replace(v, target + "/", "", 1)
+			execGrep(newText, target)
 		}
 	} else {
 		fmt.Println("No results.")
