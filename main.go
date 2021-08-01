@@ -18,7 +18,17 @@ func main() {
 func execGrep(text string, target string) {
 	res, _ := exec.Command("grep", "-r", text, target).Output()
 	result := formatGrepResult(res)
+
+	fmt.Printf("Search text : %v\n", text)
 	output(result)
+
+	if len(result) > 0 {
+		for _, v := range result {
+			execGrep(v, target)
+		}
+	} else {
+		fmt.Println("No results.")
+	}
 }
 
 func formatGrepResult(grepResult []byte) []string {
