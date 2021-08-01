@@ -10,25 +10,38 @@ import (
 func main() {
 	searchTarget := flag.String("word", "", "flag 1")
 	target := flag.String("target", "", "flag 2")
-
 	flag.Parse()
-	res, _ := exec.Command("grep", "-r", *searchTarget, *target).Output()
 
-	resultList := strings.Split(string(res), "\n")
-	fmt.Println(len(resultList))
+	execGrep(*searchTarget, *target)
+}
+
+func execGrep(text string, target string) {
+	res, _ := exec.Command("grep", "-r", text, target).Output()
+	result := formatGrepResult(res)
+	output(result)
+}
+
+func formatGrepResult(grepResult []byte) []string {
+	resultList := strings.Split(string(grepResult), "\n")
 
 	m := make(map[string]struct{})
 	newList := make([]string, 0)
 
 	for _, v := range resultList {
-		path := strings.Split(v, ":")[0]
-
-		if _, ok := m[path]; !ok {
-			m[path] = struct{}{}
-			newList = append(newList, path)
+		if len(v) > 0 {
+			path := strings.Split(v, ":")[0]
+			if _, ok := m[path]; !ok {
+				m[path] = struct{}{}
+				newList = append(newList, path)
+			}
 		}
 	}
 
-	fmt.Println(len(newList))
+	return newList
 }
 
+func output(line []string) {
+	for _, v := range line {
+		fmt.Println(v)
+	}
+}
