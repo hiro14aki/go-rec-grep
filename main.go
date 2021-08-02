@@ -10,6 +10,7 @@ import (
 type Result struct {
 	globalMap  map[string]struct{}
 	globalList []string
+	depth      int
 }
 
 func main() {
@@ -19,15 +20,23 @@ func main() {
 	flag.Parse()
 
 	// Holds the Map and Slice as structs for the overall result.
-	result := Result{globalMap: make(map[string]struct{}), globalList: make([]string, 0)}
+	result := Result{
+		globalMap:  make(map[string]struct{}),
+		globalList: make([]string, 0),
+		depth:      0,
+	}
+
 	execGrep(*searchTarget, *targetDir, *removePath, &result)
 
 	fmt.Printf("---- Result ---\n")
 	fmt.Printf("Target Files : %v\n", len(result.globalList))
-	output(result.globalList)
+	output(result.globalList, 0)
 }
 
 func execGrep(text string, target string, removePath string, globalResult *Result) {
+
+
+	fmt.Printf("depth : %v\n", globalResult.depth)
 	fmt.Printf("Search text : %v\n", text)
 
 	// Execute grep.
@@ -35,14 +44,16 @@ func execGrep(text string, target string, removePath string, globalResult *Resul
 	// Format grep results.
 	result := formatGrepResult(res, globalResult)
 
-	output(result)
+	output(result, globalResult.depth)
 
 	if len(result) > 0 {
 		fmt.Printf("\n")
+		globalResult.depth++
 		for _, v := range result {
 			newText := strings.Replace(v, removePath, "", 1)
 			execGrep(newText, target, removePath, globalResult)
 		}
+		globalResult.depth--
 	} else {
 		fmt.Println("No results.")
 		fmt.Printf("\n")
@@ -75,8 +86,13 @@ func formatGrepResult(grepResult []byte, globalResult *Result) []string {
 	return newList
 }
 
-func output(line []string) {
+func output(line []string, depth int) {
+	var printPrefix = ""
+	if depth > 0 {
+		printPrefix = "  |-="
+	}
+
 	for _, v := range line {
-		fmt.Println(v)
+		fmt.Printf("%v%v\n", printPrefix, v)
 	}
 }
