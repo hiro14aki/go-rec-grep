@@ -7,20 +7,33 @@ import (
 	"strings"
 )
 
+type Result struct {
+	globalMap  map[string]struct{}
+	globalList []string
+}
+
 func main() {
 	searchTarget := flag.String("word", "", "search target word.")
 	targetDir := flag.String("targetDir", "", "target directory.")
 	removePath := flag.String("removePath", "", "remove path prefix.")
 	flag.Parse()
 
-	execGrep(*searchTarget, *targetDir, *removePath)
+	// Holds the Map and Slice as structs for the overall result.
+	result := Result{globalMap: make(map[string]struct{}), globalList: make([]string, 0)}
+	execGrep(*searchTarget, *targetDir, *removePath, &result)
+
+	fmt.Printf("---- Result ---\n")
+	fmt.Printf("Target Files : %v\n", len(result.globalList))
+	output(result.globalList)
 }
 
-func execGrep(text string, target string, removePath string) {
+func execGrep(text string, target string, removePath string, globalResult *Result) {
 	fmt.Printf("Search text : %v\n", text)
 
+	// Execute grep.
 	res, _ := exec.Command("grep", "-r", "--exclude-dir", ".git", text, target).Output()
-	result := formatGrepResult(res)
+	// Format grep results.
+	result := formatGrepResult(res, globalResult)
 
 	output(result)
 
@@ -28,16 +41,16 @@ func execGrep(text string, target string, removePath string) {
 		fmt.Printf("\n")
 		for _, v := range result {
 			newText := strings.Replace(v, removePath, "", 1)
-			execGrep(newText, target, removePath)
+			execGrep(newText, target, removePath, globalResult)
 		}
 	} else {
 		fmt.Println("No results.")
 		fmt.Printf("\n")
 	}
-
 }
 
-func formatGrepResult(grepResult []byte) []string {
+// Split grep results to eliminate duplicate results.
+func formatGrepResult(grepResult []byte, globalResult *Result) []string {
 	resultList := strings.Split(string(grepResult), "\n")
 
 	m := make(map[string]struct{})
@@ -46,9 +59,15 @@ func formatGrepResult(grepResult []byte) []string {
 	for _, v := range resultList {
 		if len(v) > 0 {
 			path := strings.Split(v, ":")[0]
+			// Duplicate check for current search terms.
 			if _, ok := m[path]; !ok {
 				m[path] = struct{}{}
 				newList = append(newList, path)
+			}
+			// Duplicate checking for the entire result.
+			if _, ok := globalResult.globalMap[path]; !ok {
+				globalResult.globalMap[path] = struct{}{}
+				globalResult.globalList = append(globalResult.globalList, path)
 			}
 		}
 	}
