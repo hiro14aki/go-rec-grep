@@ -8,28 +8,33 @@ import (
 )
 
 func main() {
-	searchTarget := flag.String("word", "", "flag 1")
-	target := flag.String("target", "", "flag 2")
+	searchTarget := flag.String("word", "", "search target word.")
+	targetDir := flag.String("targetDir", "", "target directory.")
+	removePath := flag.String("removePath", "", "remove path prefix.")
 	flag.Parse()
 
-	execGrep(*searchTarget, *target)
+	execGrep(*searchTarget, *targetDir, *removePath)
 }
 
-func execGrep(text string, target string) {
-	res, _ := exec.Command("grep", "-r", text, target).Output()
+func execGrep(text string, target string, removePath string) {
+	fmt.Printf("Search text : %v\n", text)
+
+	res, _ := exec.Command("grep", "-r", "--exclude-dir", ".git", text, target).Output()
 	result := formatGrepResult(res)
 
-	fmt.Printf("Search text : %v\n", text)
 	output(result)
 
 	if len(result) > 0 {
+		fmt.Printf("\n")
 		for _, v := range result {
-			newText := strings.Replace(v, target + "/", "", 1)
-			execGrep(newText, target)
+			newText := strings.Replace(v, removePath, "", 1)
+			execGrep(newText, target, removePath)
 		}
 	} else {
 		fmt.Println("No results.")
+		fmt.Printf("\n")
 	}
+
 }
 
 func formatGrepResult(grepResult []byte) []string {
