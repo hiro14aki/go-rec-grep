@@ -14,9 +14,9 @@ type Result struct {
 }
 
 func main() {
-	searchTarget := flag.String("word", "", "search target word.")
-	targetDir := flag.String("targetDir", "", "target directory.")
-	removePath := flag.String("removePath", "", "remove path prefix.")
+	searchTarget := flag.String("word", "", "Search text using regular expressions")
+	targetDir := flag.String("targetDir", "", "Search target directory.")
+	removePath := flag.String("removePath", "", "Remove path prefix.")
 	flag.Parse()
 
 	// Holds the Map and Slice as structs for the overall result.
@@ -34,13 +34,11 @@ func main() {
 }
 
 func execGrep(text string, target string, removePath string, globalResult *Result) {
-
-
 	fmt.Printf("depth : %v\n", globalResult.depth)
 	fmt.Printf("Search text : %v\n", text)
 
 	// Execute grep.
-	res, _ := exec.Command("grep", "-r", "--exclude-dir", ".git", text, target).Output()
+	res, _ := exec.Command("grep", "-r", "--exclude-dir", ".git", "-E", text, target).Output()
 	// Format grep results.
 	result := formatGrepResult(res, globalResult)
 
